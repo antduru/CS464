@@ -22,10 +22,51 @@ RESULT_DIR = "ms-data/result"
 
 DEVICE = torch.device("cuda")
 
-STYLIZE_MODES = range(4)
-STYLIZE_FIRST, STYLIZE_SECOND, STYLIZE_HALF, STYLIZE_MIX = STYLIZE_MODES
+STYLIZE_FIRST, STYLIZE_SECOND, STYLIZE_HALF, STYLIZE_MIX = [0, 1, 2, 3]
 
-# WOW THIS FAR MORE COMPLICATED!
+def load_images(content, style1, style2):
+    content_path = os.path.join(CONTENT_DIR, content)
+    style1_path = os.path.join(STYLE_DIR, style1)
+    style2_path = os.path.join(STYLE_DIR, style2)
+
+    img1 = Image.open(content_path)
+    img2 = Image.open(style1_path)
+    img3 = Image.open(style2_path)
+
+    scale = 256 / max(img1.size)
+    img1 = img1.resize((round(img1.size[0] * scale), round(img1.size[1] * scale)), Image.ANTIALIAS)
+
+    scale = 256 / min(img2.size)
+    img2 = img2.resize((round(img2.size[0] * scale), round(img2.size[1] * scale)), Image.ANTIALIAS)
+
+    scale = 256 / min(img3.size)
+    img3 = img3.resize((round(img3.size[0] * scale), round(img3.size[1] * scale)), Image.ANTIALIAS)
+
+    loader = transforms.Compose([transforms.CenterCrop(*img1.size[::-1]), transforms.ToTensor()])
+
+    img1 = loader(img1).unsqueeze(0)
+    img2 = loader(img2).unsqueeze(0)
+    img3 = loader(img3).unsqueeze(0)
+
+    return img1.to(DEVICE, torch.float), img2.to(DEVICE, torch.float), img3.to(DEVICE, torch.float)
+
+def show_image(img, title='', save=False):
+    img = img.cpu().clone()
+    img = img.squeeze(0)
+    img = transforms.F.to_pil_image(img)
+
+    plt.figure()
+    plt.imshow(img)
+    if title is not None:
+        plt.title(title)
+    plt.grid(False)
+    plt.axis('off')
+
+    if save:
+        save_path = os.path.join(RESULT_DIR, "{}.jpg".format(title if title else "stylized"))
+        img.save(save_path)
+
+
 class ImageManager(object):
     def __init__(self):
         super(ImageManager, self).__init__()
@@ -89,19 +130,15 @@ class ImageManager(object):
 
 
 if __name__ == '__main__':
-    img_manager = ImageManager()
     content_img_name = "corgi.jpg"
     style_img_name = "mosaic.jpg"
     style2_img_name = "vg_starry_night.jpg"
 
-    content_img, style_img, style2_img = img_manager.load_images(content_img_name, style_img_name, style2_img_name)
+    content_img, style_img, style2_img = load_images(content_img_name, style_img_name, style2_img_name)
 
-    img_manager.show_image(content_img, title='Content Image')
-
-    img_manager.show_image(style_img, title='Style Image')
-
-    img_manager.show_image(style2_img, title='Style 2 Image')
-
+    show_image(content_img, title='Content Image')
+    show_image(style_img, title='Style Image')
+    show_image(style2_img, title='Style 2 Image')
     plt.show() # show all images
 
     style_transfer = model.StyleTransfer(content_img, style_img, style2_img)
@@ -111,4 +148,6 @@ if __name__ == '__main__':
         return style_transfer.run(num_steps=300, content_weight=1, style_weight=1e5, style2_weight=2e5)
     
     stylized_img = stylize(STYLIZE_FIRST)
-    img_manager.show_image(stylized_img, title='stylized_first', save_result=True)
+
+    show_image(stylized_img, title='stylized_first', save_result=True)
+    plt.show() # show all images
