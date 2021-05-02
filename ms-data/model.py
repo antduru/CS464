@@ -56,21 +56,17 @@ class StyleTransfer():
 
         use_mask = True if mode == STYLIZE_HALF else False
 
-        # just in order to have an iterable access to list of content/style losses
         self.content_losses.clear()
         self.style_losses.clear()
         self.style2_losses.clear()
 
         cnn = copy.deepcopy(self.cnn)
 
-        # normalization module
         normalization = norm.Normalization(self.normalization_mean, self.normalization_std).to(DEVICE)
 
-        # assuming that cnn is a nn.Sequential, so we make a new nn.Sequential
-        # to put in modules that are supposed to be activated sequentially
         model = nn.Sequential(normalization)
 
-        i = 0 # increment every time we see a conv
+        i = 0
         for layer in cnn.children():
             if isinstance(layer, nn.Conv2d):
                 i += 1
@@ -88,14 +84,12 @@ class StyleTransfer():
             model.add_module(name, layer)
 
             if name in self.content_layers:
-                # add content loss:
                 content_feature = model(self.content_img).detach()
                 content_loss = loss.ContentLoss(content_feature)
                 model.add_module("content_loss_{}".format(i), content_loss)
                 self.content_losses.append(content_loss)
 
             if name in self.style_layers:
-                # add style loss:
                 if mode != STYLIZE_SECOND:
                     style_feature = model(self.style_img).detach()
                     style_loss = loss.StyleLoss(style_feature, use_mask, invert_mask=False)
@@ -108,8 +102,6 @@ class StyleTransfer():
                     model.add_module("style2_loss_{}".format(i), style2_loss)
                     self.style2_losses.append(style2_loss)
 
-        # now we trim off the layers after the last content and style losses
-        #выбрасываем все уровни после последнего style loss или content loss
         for i in range(len(model) - 1, -1, -1):
             if isinstance(model[i], loss.ContentLoss) or isinstance(model[i], loss.StyleLoss):
                 break
@@ -122,12 +114,7 @@ class StyleTransfer():
         return optim.LBFGS([xx.requires_grad_()])
 
     def run(self, num_steps, content_weight, style_weight, style2_weight):
-        """
-        Run the style transfer
-        """
         def closure():
-            # correct the values
-            # это для того, чтобы значения тензора картинки не выходили за пределы [0;1]
             input_img.data.clamp_(0, 1)
 
             optimizer.zero_grad()
@@ -141,19 +128,16 @@ class StyleTransfer():
             for cl in self.content_losses:
                 content_score += cl.loss
 
-            #взвешивание ошибки на контенте
             content_score *= content_weight
 
             if self.mode != STYLIZE_SECOND:
                 for sl in self.style_losses:
                     style_score += sl.loss
-                #взвешивание ошибки на стиле 1
                 style_score *= style_weight
 
             if self.mode != STYLIZE_FIRST:
                 for sl2 in self.style2_losses:
                     style2_score += sl2.loss
-                #взвешивание ошибки на стиле 2
                 style2_score *= style2_weight
 
             loss = content_score
@@ -185,13 +169,11 @@ class StyleTransfer():
         log_pattern = 'Step: {}\tContent Loss: {:.4f} Style Loss: {:.4f} Style 2 Loss: {:.4f}'
         print('Optimizing..')
         self.step = 0
+
         while self.step <= num_steps:
             optimizer.step(closure)
 
-        # a last correction...
         input_img.data.clamp_(0, 1)
 
         return input_img.cpu().detach()
 
-if __name__ == '__main__':
-    pass
