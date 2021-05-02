@@ -13,6 +13,8 @@ import matplotlib.pyplot as plt
 import torchvision.transforms as transforms
 import torchvision.models as models
 
+import model
+
 ### VARIABLES
 CONTENT_DIR = "ms-data/content"
 STYLE_DIR = "ms-data/style"
@@ -73,7 +75,7 @@ class ImageManager(object):
             plt.title(title)
         plt.grid(False)
         plt.axis('off')
-        plt.show()
+
 
         if save_result:
             save_path = os.path.join(RESULT_DIR, "{}.jpg".format(title if title else "stylized"))
@@ -99,3 +101,14 @@ if __name__ == '__main__':
     img_manager.show_image(style_img, title='Style Image')
 
     img_manager.show_image(style2_img, title='Style 2 Image')
+
+    plt.show() # show all images
+
+    style_transfer = model.StyleTransfer(content_img, style_img, style2_img)
+
+    def stylize(mode):
+        style_transfer.build_model(mode)
+        return style_transfer.run(num_steps=300, content_weight=1, style_weight=1e5, style2_weight=2e5)
+    
+    stylized_img = stylize(STYLIZE_FIRST)
+    img_manager.show_image(stylized_img, title='stylized_first', save_result=True)

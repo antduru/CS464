@@ -13,6 +13,8 @@ import matplotlib.pyplot as plt
 import torchvision.transforms as transforms
 import torchvision.models as models
 
+DEVICE = torch.device("cuda")
+
 class Normalization(nn.Module):
     cnn_normalization_mean = torch.tensor([0.485, 0.456, 0.406]).to(DEVICE)
     cnn_normalization_std = torch.tensor([0.229, 0.224, 0.225]).to(DEVICE)
@@ -28,3 +30,5 @@ class Normalization(nn.Module):
     def forward(self, img):
         # normalize img
         return (img - self.mean) / self.std
+
+

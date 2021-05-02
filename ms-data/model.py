@@ -20,14 +20,20 @@ DEVICE = torch.device("cuda")
 
 STYLIZE_FIRST, STYLIZE_SECOND, STYLIZE_HALF, STYLIZE_MIX = 0, 1, 2, 3
 
-class StyleTransfer():
-    def __init__(self, cnn, normalization_mean, normalization_std, content_layers, style_layers, content_img, style_img, style2_img):
-        self.cnn = cnn
-        self.normalization_mean = normalization_mean
-        self.normalization_std = normalization_std
 
-        self.content_layers = content_layers
-        self.style_layers = style_layers
+
+
+class StyleTransfer():
+    def __init__(self, content_img, style_img, style2_img):
+        self.cnn = models.vgg19(pretrained=True).features.to(DEVICE).eval()
+        self.normalization_mean = norm.Normalization.cnn_normalization_mean
+        self.normalization_std = norm.Normalization.cnn_normalization_std
+
+        content_layers_default = ('conv_4',)
+        style_layers_default = ('conv_1', 'conv_2', 'conv_3', 'conv_4', 'conv_5')
+
+        self.content_layers = content_layers_default
+        self.style_layers = style_layers_default
 
         self.model = None
         self.step = 0
@@ -188,7 +194,4 @@ class StyleTransfer():
         return input_img.cpu().detach()
 
 if __name__ == '__main__':
-    content_layers_default = ('conv_4',)
-    style_layers_default = ('conv_1', 'conv_2', 'conv_3', 'conv_4', 'conv_5')
-    
-    vgg19 = models.vgg19(pretrained=True).features.to(DEVICE).eval()
+    pass
