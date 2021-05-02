@@ -42,7 +42,7 @@ def load_images(content, style1, style2):
     scale = 256 / min(img3.size)
     img3 = img3.resize((round(img3.size[0] * scale), round(img3.size[1] * scale)), Image.ANTIALIAS)
 
-    loader = transforms.Compose([transforms.CenterCrop(*img1.size[::-1]), transforms.ToTensor()])
+    loader = transforms.Compose([transforms.CenterCrop(img1.size[::-1]), transforms.ToTensor()])
 
     img1 = loader(img1).unsqueeze(0)
     img2 = loader(img2).unsqueeze(0)
@@ -149,5 +149,5 @@ if __name__ == '__main__':
     
     stylized_img = stylize(STYLIZE_FIRST)
 
-    show_image(stylized_img, title='stylized_first', save_result=True)
+    show_image(stylized_img, title='stylized_first', save=True)
     plt.show() # show all images
