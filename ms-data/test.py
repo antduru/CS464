@@ -53,7 +53,7 @@ def load_images(content, style1, style2):
 def show_image(img, title='', save=False):
     img = img.cpu().clone()
     img = img.squeeze(0)
-    img = transforms.F.to_pil_image(img)
+    img = transforms.functional.to_pil_image(img)
 
     plt.figure()
     plt.imshow(img)
@@ -147,7 +147,7 @@ if __name__ == '__main__':
         style_transfer.build_model(mode)
         return style_transfer.run(num_steps=300, content_weight=1, style_weight=1e5, style2_weight=2e5)
     
-    stylized_img = stylize(STYLIZE_FIRST)
+    stylized_img = stylize(STYLIZE_MIX)
 
     show_image(stylized_img, title='stylized_first', save=True)
     plt.show() # show all images
