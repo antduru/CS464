@@ -104,8 +104,6 @@ class ImageManager(object):
         return img1.to(DEVICE, torch.float), img2.to(DEVICE, torch.float), img3.to(DEVICE, torch.float)
 
     def show_image(self, tensor, title=None, save_result=False):
-        """Отрисовка и сохранение
-        """
         img = tensor.cpu().clone()
         img = img.squeeze(0)
         img = self.toPilImage(img)
